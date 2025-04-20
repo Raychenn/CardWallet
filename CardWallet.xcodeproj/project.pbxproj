@@ -30,7 +30,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		ED3CDD012DABB2F40019EB5B /* Exceptions for "CardWallet" folder in "CardWallet" target */ = {
+		ED08D9432DB53F4E007E373A /* Exceptions for "CardWallet" folder in "CardWallet" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -43,7 +43,7 @@
 		ED3CDCDB2DABB2F30019EB5B /* CardWallet */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				ED3CDD012DABB2F40019EB5B /* Exceptions for "CardWallet" folder in "CardWallet" target */,
+				ED08D9432DB53F4E007E373A /* Exceptions for "CardWallet" folder in "CardWallet" target */,
 			);
 			path = CardWallet;
 			sourceTree = "<group>";
