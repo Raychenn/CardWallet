@@ -10,6 +10,8 @@ class AddCardViewController: UIViewController {
     
     weak var delegate: AddCardViewControllerDelegate?
     
+    private var activeTextField: UITextField?
+    
     let viewModel: AddCardViewModel = AddCardViewModel()
     
     private lazy var fieldMapping: [UITextField: (AddCardViewModel.TextFieldType, UILabel)] = [
@@ -56,9 +58,9 @@ class AddCardViewController: UIViewController {
     
     private let cardNumberField: UITextField = UITextField.defaultTextField(placeholder: "0000 0000 0000 0000", keyboardType: .numberPad)
     
-    private let monthField: UITextField = UITextField.defaultTextField(placeholder: "Month")
+    private let monthField: UITextField = UITextField.defaultTextField(placeholder: "Month", keyboardType: .numberPad)
     
-    private let yearField: UITextField = UITextField.defaultTextField(placeholder: "Year")
+    private let yearField: UITextField = UITextField.defaultTextField(placeholder: "Year", keyboardType: .numberPad)
     
     private let securityCodeField: UITextField = UITextField.defaultTextField(
         placeholder: "Security Code",
@@ -73,13 +75,31 @@ class AddCardViewController: UIViewController {
     private let expirationErrorLabel = UILabel().makeErrorLabel()
     private let securityCodeErrorLabel = UILabel().makeErrorLabel()
     
-    private let addCardButton: AddCardButton = {
+    private lazy var pickerView: UIPickerView = {
+        let pickerView = UIPickerView()
+        pickerView.delegate = self
+        pickerView.dataSource = self
+        pickerView.translatesAutoresizingMaskIntoConstraints = false
+        return pickerView
+    }()
+    
+    private lazy var toolBar: UIToolbar = {
+        let toolBar = UIToolbar()
+        toolBar.sizeToFit()
+        let flexibleSpace = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let doneButton = UIBarButtonItem(barButtonSystemItem: .done, target: nil, action: #selector(doneButtonTapped))
+        toolBar.setItems([flexibleSpace, doneButton], animated: false)
+        return toolBar
+    }()
+    
+    private lazy var addCardButton: AddCardButton = {
         let button = AddCardButton(type: .system)
         button.setTitle("Add Card", for: .normal)
         button.backgroundColor = .systemOrange
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
         button.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
+        button.addTarget(self, action: #selector(addCardButtonTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -90,8 +110,8 @@ class AddCardViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
-        setupActions()
         setupTextFieldDelegates()
+        setupBindings()
     }
     
     // MARK: Helpers
@@ -102,6 +122,11 @@ class AddCardViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         contentView.addSubview(stackView)
+        
+        [monthField, yearField].forEach {
+            $0.inputView = pickerView
+            $0.inputAccessoryView = toolBar
+        }
         
         // Add fields to stack view
         stackView.addArrangedSubview(createFieldStack(text: "Card Name*", field: cardNameField, errorLabel: cardNameErrorLabel))
@@ -139,10 +164,6 @@ class AddCardViewController: UIViewController {
         ])
     }
     
-    private func setupActions() {
-        addCardButton.addTarget(self, action: #selector(addCardButtonTapped), for: .touchUpInside)
-    }
-    
     private func setupNavigationBar() {
         title = "New Card"
         navigationItem.leftBarButtonItem = UIBarButtonItem(
@@ -151,6 +172,12 @@ class AddCardViewController: UIViewController {
             target: self,
             action: #selector(backButtonTapped)
         )
+    }
+    
+    private func setupBindings() {
+        viewModel.onSelectionChanged = { [weak self] value in
+            self?.activeTextField?.text = value
+        }
     }
     
     private func createFieldStack(text: String, field: UIView, errorLabel: UILabel) -> UIStackView {
@@ -233,6 +260,10 @@ class AddCardViewController: UIViewController {
         delegate?.didAddNewCard(card)
         navigationController?.popViewController(animated: true)
     }
+    
+    @objc private func doneButtonTapped() {
+        activeTextField?.resignFirstResponder()
+    }
 }
 
 // MARK: UITextFieldDelegate
@@ -300,4 +331,37 @@ extension AddCardViewController: UITextFieldDelegate {
     
         return true
     }
+    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        activeTextField = textField
+        if textField == monthField {
+            viewModel.updatePickerData(for: .month)
+        } else if textField == yearField {
+            viewModel.updatePickerData(for: .year)
+        }
+        pickerView.reloadAllComponents()
+    }
+}
+
+// MARK: UIPickerViewDataSource & UIPickerViewDelegate
+
+extension AddCardViewController:  UIPickerViewDataSource, UIPickerViewDelegate {
+
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        1
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+         viewModel.numberOfRows()
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+         viewModel.title(for: row)
+    }
+    
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+         viewModel.didSelectRow(row)
+    }
+    
 }

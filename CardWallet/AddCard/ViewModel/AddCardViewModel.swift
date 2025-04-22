@@ -9,7 +9,44 @@ import Foundation
 
 class AddCardViewModel {
     
-    var onAddCardButtonUpdated: ((Bool) -> Void)?
+    // MARK: PickerView components
+    
+    var onSelectionChanged: ((String) -> Void)?
+    
+    enum PickerType {
+        case month
+        case year
+    }
+    
+    private(set) var currentData: [String] = []
+    
+    private(set) var selectedValue: String?
+    
+    func updatePickerData(for type: PickerType) {
+        switch type {
+        case .month:
+            currentData = (1...12).map { String(format: "%02d", $0) }
+        case .year:
+            let currentYear = Calendar.current.component(.year, from: Date())
+            currentData = (3...30).map { String(currentYear + $0) }
+        }
+        selectedValue = currentData.first
+    }
+    
+    func numberOfRows() -> Int {
+        return currentData.count
+    }
+
+    func title(for row: Int) -> String {
+        return currentData[row]
+    }
+
+    func didSelectRow(_ row: Int) {
+        selectedValue = currentData[row]
+        onSelectionChanged?(selectedValue!)
+    }
+    
+    // MARK: Card Validation Components
     
     enum TextFieldType {
         case cardName
