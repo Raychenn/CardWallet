@@ -5,8 +5,6 @@ class CardsViewController: UIViewController {
     // MARK: Properties
     
     private var cardViews: [CardView] = []
-    private var draggedCard: CardView?
-    private var originalCardPosition: CGPoint?
     private var cardInitialCenter: CGPoint?
     private let cardLiftDistance: CGFloat = 20
     private let viewModel: CardsViewModel = CardsViewModel()
@@ -128,7 +126,8 @@ class CardsViewController: UIViewController {
         super.viewDidLoad()
         setupUI()
         setupNavigationBar()
-        updateEmptyState()
+        setupBinding()
+        viewModel.loadMockCards()
     }
     
     // MARK: Helpers
@@ -218,6 +217,13 @@ class CardsViewController: UIViewController {
         navigationItem.rightBarButtonItem = languageButton
     }
     
+    private func setupBinding() {
+        viewModel.onCardsChanged = { [weak self] cards in
+            self?.updateCards(cards)
+            self?.updateEmptyState()
+        }
+    }
+    
     private func setupCardInteractions(_ cardView: CardView) {
         // Tap gesture
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(cardTapped(_:)))
@@ -277,27 +283,8 @@ class CardsViewController: UIViewController {
         guard let cardView = gesture.view as? CardView,
               let index = cardViews.firstIndex(of: cardView) else { return }
         
-        let cards = viewModel.cards
-        
-        // Only animate if it's not the first card
-        if index > 0 {
-            // Animate card lift
-            UIView.animate(withDuration: 0.2, animations: {
-                cardView.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
-                cardView.layer.shadowColor = UIColor.black.cgColor
-                cardView.layer.shadowOpacity = 0.3
-                cardView.layer.shadowOffset = CGSize(width: 0, height: 10)
-                cardView.layer.shadowRadius = 10
-            }) { _ in
-                UIView.animate(withDuration: 0.1) {
-                    cardView.transform = .identity
-                    cardView.layer.shadowOpacity = 0
-                }
-            }
-        }
-        
         // Navigate to card details
-        let selectedCard = cards[index]
+        let selectedCard = viewModel.cards[index]
         let detailsVC = CardDetailsViewController(card: selectedCard)
         navigationController?.pushViewController(detailsVC, animated: true)
     }
@@ -379,7 +366,6 @@ class CardsViewController: UIViewController {
 extension CardsViewController: AddCardViewControllerDelegate {
     func didAddNewCard(_ card: Card) {
         viewModel.add(card)
-        updateCards(viewModel.cards)
     }
 }
 

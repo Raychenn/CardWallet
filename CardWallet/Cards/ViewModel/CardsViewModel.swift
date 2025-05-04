@@ -9,7 +9,13 @@ import Foundation
 
 class CardsViewModel {
     
-    private(set) var cards: [Card] = []
+    var onCardsChanged: (([Card]) -> Void)?
+    
+    private(set) var cards: [Card] = [] {
+        didSet {
+            onCardsChanged?(cards)
+        }
+    }
     
     var isEmptyState: Bool {
         return cards.isEmpty
